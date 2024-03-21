@@ -1,14 +1,18 @@
 @host = http://localhost
 @port = :8080
 @api = {{host}}{{port}}
-@id = 
+@id = 65fc2e6aea300602af2d2dc3
 
 ### Create a new user
 POST {{api}}/users
 Content-Type: application/json
 
 {
-    "name": "frani"
+    "name": "frani",
+    "lastname": "frani",
+    "email": "frani@mail.co",
+    "password": "qwerty123456789",
+    "username": "frani"
 }
 
 ### Get all users

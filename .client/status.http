@@ -5,3 +5,6 @@
 
 ### Get Status
 GET {{api}}/status
+
+### 404
+GET {{api}}/40432

@@ -2,22 +2,16 @@ package configs
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// Ctx | @desc: mongo context interface
-var Ctx context.Context
-
-// Cancel | @desc: mongo context cancel function
-var Cancel context.CancelFunc
-
-// Client | @desc: mongo client struct
+// client | @desc: mongo client struct
 var client *mongo.Client
 
 // DB | @desc: mongo database struct
@@ -34,11 +28,11 @@ func ConnectDB() {
 	MONGO_URI := os.Getenv("MONGO_URI")
 	MONGO_DB := os.Getenv("MONGO_DB")
 
-	Ctx, Cancel = context.WithTimeout(context.Background(), 30*time.Second)
-	client, err = mongo.Connect(Ctx, options.Client().ApplyURI(MONGO_URI))
+	client, err = mongo.Connect(context.Background(), options.Client().ApplyURI(MONGO_URI))
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("🍀 Mongo Connected")
 
 	// Connect to mongo database
 	DB = client.Database(MONGO_DB)

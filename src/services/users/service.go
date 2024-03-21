@@ -1,12 +1,12 @@
 package users
 
 import (
-	"github.com/frani/go-gin-api/src/configs"
+	"context"
 
-	"go.mongodb.org/mongo-driver/bson"
+	configs "github.com/frani/go-gin-api/src/configs"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // UserCollection | @desc: the user ccollection on the database
@@ -16,70 +16,46 @@ var UserCollection *mongo.Collection
 CreateUserSchema
 @desc: adds schema validation and indexes to collection
 */
-func CreateUser(Name string, Email string) result error  {
-	jsonSchema := bson.M{
-		"bsonType": "object",
-		"required": []string{"name", "email", "password"},
-		"properties": bson.M{
-			"name": bson.M{
-				"bsonType":    "string",
-				"description": "must be a string and is required",
-			},
-			"email": bson.M{
-				"bsonType": "string",
-				"pattern":  "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-			},
-			"password": bson.M{
-				"bsonType":    "string",
-				"description": "must be a string and is required",
-			},
-		},
-	}
-
-	validator := bson.M{
-		"$jsonSchema": jsonSchema,
-	}
-
-	configs.DB.CreateCollection(configs.Ctx, "users", options.CreateCollection().SetValidator(validator))
-
-	UserCollection = configs.DB.Collection("users")
+func CreateUser(Name string, Lastname string, Password string, Email string, Username string) (result interface{}, err error) {
 
 	newUser := User{
-		Id:    primitive.NewObjectID(),
-		Name:  Name,
-		Email: Email,
+		Id:       primitive.NewObjectID(),
+		Name:     Name,
+		Lastname: Lastname,
+		Password: Password,
+		Username: Username,
+		Email:    Email,
 	}
 
-	result, err := UserCollection.FindOneAndUpdate(configs.Ctx)
-	result, err := UserCollection.InsertOne(configs.Ctx, newUser, options.ups)
+	result, err = configs.DB.Collection("users").InsertOne(context.TODO(), newUser)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return result
+	return result, nil
 }
 
-func ListUsers(filter bson) error {
-	cursor, err := UserCollection.Find(configs.Ctx, filter)
+// func ListUsers(filter bson) error {
+// 	cursor, err := UserCollection.Find(configs.Ctx, filter)
 
-    if err!= nil {
-        return err
-    }
+// 	if err != nil {
+// 		return err
+// 	}
 
-    defer cursor.Close(configs.Ctx)
+// 	defer cursor.Close(configs.Ctx)
 
-    for cursor.Next(configs.Ctx) {
-        var user User
+// 	for cursor.Next(configs.Ctx) {
+// 		var user User
 
-        err := cursor.Decode(&user)
+// 		err := cursor.Decode(&user)
 
-        if err!= nil {
-            return err
-        }
+// 		if err != nil {
+// 			return err
+// 		}
 
-        fmt.Println(user)
-    }
+// 		fmt.Println(user)
+// 	}
 
-    return users
-}
+// 	return users
+// }

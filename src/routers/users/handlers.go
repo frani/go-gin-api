@@ -1,12 +1,15 @@
 package users
 
 import (
+	"context"
+	"fmt"
 	"net/http"
-	"time"
 
-	database "github.com/frani/go-gin-api/src/configs"
+	"github.com/frani/go-gin-api/src/configs"
+	userService "github.com/frani/go-gin-api/src/services/users"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // Getusers func gets all exists users.
@@ -18,11 +21,9 @@ import (
 // @Success 200 {array} models.User
 // @Router /v1/users [get]
 func ListUsers(ctx *gin.Context) {
-	// Create database connection.
-	db := database.DB
 
 	// Get all users.
-	users, err := db.Collection("users").Find(database.Ctx)
+	cursor, err := configs.DB.Collection("users").Find(context.Background(), bson.D{{}})
 	if err != nil {
 		// Return, if users not found.
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -32,12 +33,25 @@ func ListUsers(ctx *gin.Context) {
 			"errors":  nil,
 		})
 	}
+
+	var users []bson.M
+	err = cursor.All(context.Background(), &users)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "interla server error",
+			"error":   err.Error(),
+		})
+		return
+	}
+
 	// Return status 200 OK.
 	ctx.JSON(http.StatusOK, gin.H{
-		"msg":   "users were not found",
-		"count": len(users),
-		"users": users,
-		"error": false,
+		"success": true,
+		"message": "users were not found",
+		"count":   len(users),
+		"data":    users,
+		"error":   false,
 	})
 }
 
@@ -52,26 +66,38 @@ func ListUsers(ctx *gin.Context) {
 // @Router /v1/user/{id} [get]
 func GetUser(ctx *gin.Context) {
 	// Catch user ID from URL.
-	id := uuid.Parse(ctx.Param("id"))
-
-	DB := database.DB
+	idStr := ctx.Param("id")
+	fmt.Println(idStr)
+	id, err := primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "bad request",
+			"success": false,
+			"data":    nil,
+		})
+		return
+	}
 
 	// Get user by ID.
-	user, err := DB.Collection("users").FindOne()
+	var user bson.M
+	err = configs.DB.Collection("users").FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&user)
 	if err != nil {
-		// Return, if user not found.
 		ctx.JSON(http.StatusNotFound, gin.H{
-			"error": true,
-			"msg":   "user with the given ID is not found",
-			"user":  nil,
+			"error":   err.Error(),
+			"message": "user with the given ID is not found",
+			"success": false,
+			"data":    nil,
 		})
+		return
 	}
 
 	// Return status 200 OK.
 	ctx.JSON(http.StatusOK, gin.H{
-		"error": false,
-		"msg":   nil,
-		"user":  user,
+		"error":   false,
+		"message": nil,
+		"success": true,
+		"data":    user,
 	})
 }
 
@@ -88,84 +114,33 @@ func GetUser(ctx *gin.Context) {
 // @Security ApiKeyAuth
 // @Router /v1/user [post]
 func PostUser(ctx *gin.Context) {
-	// Get now time.
-	now := time.Now().Unix()
 
-	// Get claims from JWT.
-	claims, err := utils.ExtractTokenMetadata(c)
+	var body postUserJSON
+	err := ctx.ShouldBindJSON(&body)
 	if err != nil {
-		// Return status 500 and JWT parse error.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
-
-	// Set expiration time from JWT data of current user.
-	expires := claims.Expires
-
-	// Checking, if now time greather than expiration from JWT.
-	if now > expires {
-		// Return status 401 and unauthorized error message.
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error": true,
-			"msg":   "unauthorized, check expiration time of your token",
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "bad request",
+			"success": false,
 		})
 	}
 
 	// Create new User struct
-	user := &models.User{}
-
-	// Check, if received JSON data is valid.
-	if err := ctx.BodyParser(user); err != nil {
-		// Return status 400 and error message.
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
-
-	// Create database connection.
-	db, err := database.OpenDBConnection()
+	user, err := userService.CreateUser(body.Name, body.Lastname, body.Password, body.Email, body.Email)
 	if err != nil {
-		// Return status 500 and database connection error.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
-
-	// Create a new validator for a User model.
-	validate := utils.NewValidator()
-
-	// Set initialized default data for user:
-	user.ID = uuid.New()
-	user.CreatedAt = time.Now()
-	user.userstatus = 1 // 0 == draft, 1 == active
-
-	// Validate user fields.
-	if err := validate.Struct(user); err != nil {
-		// Return, if some fields are not valid.
 		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": true,
-			"msg":   utils.ValidatorErrors(err),
-		})
-	}
-
-	// Delete user by given ID.
-	if err := db.CreateUser(user); err != nil {
-		// Return status 500 and error message.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
+			"error":   err.Error(),
+			"success": false,
+			"message": "bad request",
 		})
 	}
 
 	// Return status 200 OK.
 	ctx.JSON(http.StatusOK, gin.H{
-		"error": false,
-		"msg":   nil,
-		"user":  user,
+		"error":   false,
+		"success": true,
+		"message": "user created",
+		"data":    user,
 	})
 }
 
@@ -183,91 +158,91 @@ func PostUser(ctx *gin.Context) {
 // @Success 201 {string} status "ok"
 // @Security ApiKeyAuth
 // @Router /v1/user [put]
-func PatchUser(ctx *gin.Context) {
-	// Get now time.
-	now := time.Now().Unix()
+// func PatchUser(ctx *gin.Context) {
+// 	// Get now time.
+// 	now := time.Now().Unix()
 
-	// Get claims from JWT.
-	claims, err := utils.ExtractTokenMetadata(c)
-	if err != nil {
-		// Return status 500 and JWT parse error.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Get claims from JWT.
+// 	claims, err := utils.ExtractTokenMetadata(c)
+// 	if err != nil {
+// 		// Return status 500 and JWT parse error.
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Set expiration time from JWT data of current user.
-	expires := claims.Expires
+// 	// Set expiration time from JWT data of current user.
+// 	expires := claims.Expires
 
-	// Checking, if now time greather than expiration from JWT.
-	if now > expires {
-		// Return status 401 and unauthorized error message.
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error": true,
-			"msg":   "unauthorized, check expiration time of your token",
-		})
-	}
+// 	// Checking, if now time greather than expiration from JWT.
+// 	if now > expires {
+// 		// Return status 401 and unauthorized error message.
+// 		ctx.JSON(http.StatusUnauthorized, gin.H{
+// 			"error": true,
+// 			"message":   "unauthorized, check expiration time of your token",
+// 		})
+// 	}
 
-	// Create new User struct
-	user := &models.User{}
+// 	// Create new User struct
+// 	user := &models.User{}
 
-	// Check, if received JSON data is valid.
-	if err := ctx.BindJSON(user); err != nil {
-		// Return status 400 and error message.
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Check, if received JSON data is valid.
+// 	if err := ctx.BindJSON(user); err != nil {
+// 		// Return status 400 and error message.
+// 		ctx.JSON(http.StatusBadRequest, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Create database connection.
-	db, err := database.OpenDBConnection()
-	if err != nil {
-		// Return status 500 and database connection error.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Create database connection.
+// 	db, err := OpenDBConnection()
+// 	if err != nil {
+// 		// Return status 500 and database connection error.
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Checking, if user with given ID is exists.
-	foundedUser, err := db.GetUser(user.ID)
-	if err != nil {
-		// Return status 404 and user not found error.
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"error": true,
-			"msg":   "user with this ID not found",
-		})
-	}
+// 	// Checking, if user with given ID is exists.
+// 	foundedUser, err := db.GetUser(user.ID)
+// 	if err != nil {
+// 		// Return status 404 and user not found error.
+// 		ctx.JSON(http.StatusNotFound, gin.H{
+// 			"error": true,
+// 			"message":   "user with this ID not found",
+// 		})
+// 	}
 
-	// Set initialized default data for user:
-	user.UpdatedAt = time.Now()
+// 	// Set initialized default data for user:
+// 	user.UpdatedAt = time.Now()
 
-	// Create a new validator for a User model.
-	validate := utils.NewValidator()
+// 	// Create a new validator for a User model.
+// 	validate := utils.NewValidator()
 
-	// Validate user fields.
-	if err := validate.Struct(user); err != nil {
-		// Return, if some fields are not valid.
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": true,
-			"msg":   utils.ValidatorErrors(err),
-		})
-	}
+// 	// Validate user fields.
+// 	if err := validate.Struct(user); err != nil {
+// 		// Return, if some fields are not valid.
+// 		ctx.JSON(http.StatusBadRequest, gin.H{
+// 			"error": true,
+// 			"message":   utils.ValidatorErrors(err),
+// 		})
+// 	}
 
-	// Update user by given ID.
-	if err := db.UpdateUser(foundedUser.ID, user); err != nil {
-		// Return status 500 and error message.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Update user by given ID.
+// 	if err := db.UpdateUser(foundedUser.ID, user); err != nil {
+// 		// Return status 500 and error message.
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Return status 201.
-	return ctx.SendStatus(http.StatusCreated)
-}
+// 	// Return status 201.
+// 	return ctx.SendStatus(http.StatusCreated)
+// }
 
 // DeleteUser func for deletes user by given ID.
 // @Description Delete user by given ID.
@@ -279,85 +254,85 @@ func PatchUser(ctx *gin.Context) {
 // @Success 204 {string} status "ok"
 // @Security ApiKeyAuth
 // @Router /v1/user [delete]
-func DeleteUser(ctx *gin.Context) {
-	// Get now time.
-	now := time.Now().Unix()
+// func DeleteUser(ctx *gin.Context) {
+// 	// Get now time.
+// 	now := time.Now().Unix()
 
-	// Get claims from JWT.
-	claims, err := utils.ExtractTokenMetadata(c)
-	if err != nil {
-		// Return status 500 and JWT parse error.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Get claims from JWT.
+// 	claims, err := utils.ExtractTokenMetadata(c)
+// 	if err != nil {
+// 		// Return status 500 and JWT parse error.
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Set expiration time from JWT data of current user.
-	expires := claims.Expires
+// 	// Set expiration time from JWT data of current user.
+// 	expires := claims.Expires
 
-	// Checking, if now time greather than expiration from JWT.
-	if now > expires {
-		// Return status 401 and unauthorized error message.
-		ctx.JSON(http.StatusUnauthorized, gin.H{
-			"error": true,
-			"msg":   "unauthorized, check expiration time of your token",
-		})
-	}
+// 	// Checking, if now time greather than expiration from JWT.
+// 	if now > expires {
+// 		// Return status 401 and unauthorized error message.
+// 		ctx.JSON(http.StatusUnauthorized, gin.H{
+// 			"error": true,
+// 			"message":   "unauthorized, check expiration time of your token",
+// 		})
+// 	}
 
-	// Create new User struct
-	user := &models.User{}
+// 	// Create new User struct
+// 	user := &models.User{}
 
-	// Check, if received JSON data is valid.
-	if err := ctx.BodyParser(user); err != nil {
-		// Return status 400 and error message.
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Check, if received JSON data is valid.
+// 	if err := ctx.BodyParser(user); err != nil {
+// 		// Return status 400 and error message.
+// 		ctx.JSON(http.StatusBadRequest, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Create a new validator for a User model.
-	validate := utils.NewValidator()
+// 	// Create a new validator for a User model.
+// 	validate := utils.NewValidator()
 
-	// Validate only one user field ID.
-	if err := validate.StructPartial(user, "id"); err != nil {
-		// Return, if some fields are not valid.
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"error": true,
-			"msg":   utils.ValidatorErrors(err),
-		})
-	}
+// 	// Validate only one user field ID.
+// 	if err := validate.StructPartial(user, "id"); err != nil {
+// 		// Return, if some fields are not valid.
+// 		ctx.JSON(http.StatusBadRequest, gin.H{
+// 			"error": true,
+// 			"message":   utils.ValidatorErrors(err),
+// 		})
+// 	}
 
-	// Create database connection.
-	db, err := database.OpenDBConnection()
-	if err != nil {
-		// Return status 500 and database connection error.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Create database connection.
+// 	db, err := OpenDBConnection()
+// 	if err != nil {
+// 		// Return status 500 and database connection error.
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Checking, if user with given ID is exists.
-	foundedUser, err := db.GetUser(user.ID)
-	if err != nil {
-		// Return status 404 and user not found error.
-		ctx.JSON(http.StatusNotFound, gin.H{
-			"error": true,
-			"msg":   "user with this ID not found",
-		})
-	}
+// 	// Checking, if user with given ID is exists.
+// 	foundedUser, err := db.GetUser(user.ID)
+// 	if err != nil {
+// 		// Return status 404 and user not found error.
+// 		ctx.JSON(http.StatusNotFound, gin.H{
+// 			"error": true,
+// 			"message":   "user with this ID not found",
+// 		})
+// 	}
 
-	// Delete user by given ID.
-	if err := db.DeleteUser(foundedUser.ID); err != nil {
-		// Return status 500 and error message.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": true,
-			"msg":   err.Error(),
-		})
-	}
+// 	// Delete user by given ID.
+// 	if err := db.DeleteUser(foundedUser.ID); err != nil {
+// 		// Return status 500 and error message.
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{
+// 			"error": true,
+// 			"message":   err.Error(),
+// 		})
+// 	}
 
-	// Return status 204 no content.
-	return ctx.SendStatus(http.StatusNoContent)
-}
+// 	// Return status 204 no content.
+// 	return ctx.SendStatus(http.StatusNoContent)
+// }
