@@ -17,6 +17,8 @@ func main() {
 	// Create Gin App
 	r := gin.New()
 
+	r.SetTrustedProxies(nil)
+
 	// Middleware
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
