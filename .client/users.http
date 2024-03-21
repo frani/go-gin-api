@@ -1,7 +1,7 @@
 @host = http://localhost
 @port = :8080
 @api = {{host}}{{port}}
-@id = 65fc2e6aea300602af2d2dc3
+@id = 65fc53a8a8c6f1a26c007414
 
 ### Create a new user
 POST {{api}}/users
@@ -21,13 +21,13 @@ GET {{api}}/users
 ### Get a user
 GET {{api}}/users/{{id}}
 
-### Delete a user
-DELETE {{api}}/users/{{id}}
-
 ### Update a user
 PATCH {{api}}/users/{{id}}
 Content-Type: application/json
 
 {
-    "name": "Joe"
+    "name": "asdfasdfasd"
 }
+
+### Delete a user
+DELETE {{api}}/users/{{id}}

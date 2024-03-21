@@ -6,7 +6,7 @@ func InitRouter(r *gin.RouterGroup) *gin.RouterGroup {
 	r.GET("/", ListUsers)
 	r.POST("/", PostUser)
 	r.GET("/:id", GetUser)
-	// r.PATCH("/:userId", PatchUser)
-	// r.DELETE("/:userId", DeleteUser)
+	r.PATCH("/:id", PatchUser)
+	r.DELETE("/:id", DeleteUser)
 	return r
 }
