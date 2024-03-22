@@ -23,6 +23,17 @@ import (
 // @Router /v1/users [get]
 func ListUsers(ctx *gin.Context) {
 
+	var query listUserQuery
+	err := ctx.ShouldBindQuery(&query)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "bad request",
+			"success": false,
+		})
+		return
+	}
+
 	// Get all users.
 	cursor, err := configs.DB.Collection("users").Find(context.Background(), bson.D{{}})
 	if err != nil {
@@ -33,6 +44,7 @@ func ListUsers(ctx *gin.Context) {
 			"message": "error trying to find users",
 			"errors":  nil,
 		})
+		return
 	}
 
 	var users []bson.M
@@ -66,10 +78,18 @@ func ListUsers(ctx *gin.Context) {
 // @Success 200 {object} models.User
 // @Router /v1/user/{id} [get]
 func GetUser(ctx *gin.Context) {
-	// Catch user ID from URL.
-	idStr := ctx.Param("id")
-	fmt.Println(idStr)
-	id, err := primitive.ObjectIDFromHex(idStr)
+
+	var param getUserParam
+	err := ctx.ShouldBindUri(&param)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "bad request",
+			"success": false,
+		})
+		return
+	}
+	id, err := primitive.ObjectIDFromHex(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
@@ -116,7 +136,7 @@ func GetUser(ctx *gin.Context) {
 // @Router /v1/user [post]
 func PostUser(ctx *gin.Context) {
 
-	var body postUserJSON
+	var body postUserBody
 	err := ctx.ShouldBindJSON(&body)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -124,6 +144,7 @@ func PostUser(ctx *gin.Context) {
 			"message": "bad request",
 			"success": false,
 		})
+		return
 	}
 
 	// Create new User struct
@@ -134,6 +155,7 @@ func PostUser(ctx *gin.Context) {
 			"success": false,
 			"message": "bad request",
 		})
+		return
 	}
 
 	// Return status 200 OK.
@@ -175,7 +197,7 @@ func PatchUser(ctx *gin.Context) {
 		return
 	}
 
-	var body patchUserJSON
+	var body patchUserBody
 	err = ctx.ShouldBindJSON(&body)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -188,7 +210,7 @@ func PatchUser(ctx *gin.Context) {
 
 	// Define filter and update
 	filter := bson.M{"_id": id}
-	toSet := patchUserJSON{
+	toSet := patchUserBody{
 		Email:    body.Email,
 		Name:     body.Name,
 		Lastname: body.Lastname,
@@ -232,10 +254,18 @@ func PatchUser(ctx *gin.Context) {
 // @Router /v1/user [delete]
 func DeleteUser(ctx *gin.Context) {
 
-	// Catch user ID from URL.
-	idStr := ctx.Param("id")
-	fmt.Println(idStr)
-	id, err := primitive.ObjectIDFromHex(idStr)
+	var param deleteUserParam
+	err := ctx.ShouldBindUri(&param)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "bad request",
+			"success": false,
+		})
+		return
+	}
+
+	id, err := primitive.ObjectIDFromHex(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
