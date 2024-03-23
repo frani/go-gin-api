@@ -1,7 +1,11 @@
 @host = http://localhost
 @port = :8080
 @api = {{host}}{{port}}
-@id = 65fda0b65bcda483eaf3b6d5
+@id = 65ff26a648554596f5720ea6
+
+
+### LIST users
+GET {{api}}/users?limit=10
 
 ### Create a new user
 POST {{api}}/users
@@ -15,9 +19,6 @@ Content-Type: application/json
     "username": "frani"
 }
 
-### Get all users
-GET {{api}}/users?limit=10
-
 ### Get a user
 GET {{api}}/users/{{id}}
 
@@ -26,7 +27,9 @@ PATCH {{api}}/users/{{id}}
 Content-Type: application/json
 
 {
-    "name": "asdfasdfasd"
+    "name": "Juan",
+    "lastname": "Paco de la mar",
+    "email": "paco_el_piola@mail.com"
 }
 
 ### Delete a user
