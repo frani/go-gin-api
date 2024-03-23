@@ -5,18 +5,33 @@ import (
 
 	configs "github.com/frani/go-gin-api/src/configs"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// UserCollection | @desc: the user ccollection on the database
-var UserCollection *mongo.Collection
+func List(filter bson.M) (result bson.M, err error) {
+
+	// Get all users.
+	cursor, err := configs.DB.Collection("users").Find(context.TODO(), bson.D{{}})
+	if err != nil {
+		return nil, err
+	}
+
+	var users []bson.M
+	err = cursor.All(context.TODO(), &users)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
 
 /*
 CreateUserSchema
 @desc: adds schema validation and indexes to collection
 */
-func CreateUser(Name string, Lastname string, Password string, Email string, Username string) (result interface{}, err error) {
+func CreateOne(Name string, Lastname string, Password string, Email string, Username string) (result interface{}, err error) {
 
 	newUser := User{
 		Id:       primitive.NewObjectID(),
@@ -36,26 +51,33 @@ func CreateUser(Name string, Lastname string, Password string, Email string, Use
 	return result, nil
 }
 
-// func ListUsers(filter bson) error {
-// 	cursor, err := UserCollection.Find(configs.Ctx, filter)
+func FindOne(filter bson.M) (result bson.M, err error) {
 
-// 	if err != nil {
-// 		return err
-// 	}
+	err = configs.DB.Collection("users").FindOne(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
 
-// 	defer cursor.Close(configs.Ctx)
+	return result, nil
+}
 
-// 	for cursor.Next(configs.Ctx) {
-// 		var user User
+func UpdateOne(filter bson.M, update bson.M) (result bson.M, err error) {
 
-// 		err := cursor.Decode(&user)
+	opt := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	err = configs.DB.Collection("users").FindOneAndUpdate(context.TODO(), filter, update, opt).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
 
-// 		if err != nil {
-// 			return err
-// 		}
+	return result, nil
+}
 
-// 		fmt.Println(user)
-// 	}
+func DeleteOne(filter bson.M) (result bson.M, err error) {
 
-// 	return users
-// }
+	err = configs.DB.Collection("users").FindOneAndDelete(context.TODO(), filter).Decode(&result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

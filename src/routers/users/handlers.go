@@ -1,16 +1,12 @@
 package users
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 
-	"github.com/frani/go-gin-api/src/configs"
 	userService "github.com/frani/go-gin-api/src/services/users"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Getusers func gets all exists users.
@@ -34,21 +30,7 @@ func ListUsers(ctx *gin.Context) {
 		return
 	}
 
-	// Get all users.
-	cursor, err := configs.DB.Collection("users").Find(context.Background(), bson.D{{}})
-	if err != nil {
-		// Return, if users not found.
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"data":    nil,
-			"message": "error trying to find users",
-			"errors":  nil,
-		})
-		return
-	}
-
-	var users []bson.M
-	err = cursor.All(context.Background(), &users)
+	users, err := userService.List()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -101,12 +83,14 @@ func GetUser(ctx *gin.Context) {
 	}
 
 	// Get user by ID.
-	var user bson.M
-	err = configs.DB.Collection("users").FindOne(context.Background(), bson.D{{Key: "_id", Value: id}}).Decode(&user)
+	// Define filter and update
+	filter := bson.M{"_id": id}
+	found, err := userService.FindOne(filter)
+
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error":   err.Error(),
-			"message": "user with the given ID is not found",
+			"message": "document not found",
 			"success": false,
 			"data":    nil,
 		})
@@ -118,7 +102,7 @@ func GetUser(ctx *gin.Context) {
 		"error":   false,
 		"message": nil,
 		"success": true,
-		"data":    user,
+		"data":    found,
 	})
 }
 
@@ -183,10 +167,18 @@ func PostUser(ctx *gin.Context) {
 // @Router /v1/user [put]
 func PatchUser(ctx *gin.Context) {
 
-	// Catch user ID from URL.
-	idStr := ctx.Param("id")
-	fmt.Println(idStr)
-	id, err := primitive.ObjectIDFromHex(idStr)
+	var param deleteUserParam
+	err := ctx.ShouldBindUri(&param)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   err.Error(),
+			"message": "bad request",
+			"success": false,
+		})
+		return
+	}
+
+	id, err := primitive.ObjectIDFromHex(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),
@@ -218,10 +210,7 @@ func PatchUser(ctx *gin.Context) {
 		Password: body.Password,
 	}
 	update := bson.M{"$set": toSet}
-	opt := options.FindOneAndUpdate().SetReturnDocument(options.After)
-
-	var result bson.M
-	err = configs.DB.Collection("users").FindOneAndUpdate(context.TODO(), filter, update, opt).Decode(&result)
+	updated, err := userService.UpdateOne(filter, update)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -237,7 +226,7 @@ func PatchUser(ctx *gin.Context) {
 		"error":   nil,
 		"message": "updated",
 		"success": true,
-		"data":    result,
+		"data":    updated,
 	})
 
 }
@@ -278,9 +267,7 @@ func DeleteUser(ctx *gin.Context) {
 
 	// Define filter and update
 	filter := bson.M{"_id": id}
-
-	var result bson.M
-	err = configs.DB.Collection("users").FindOneAndDelete(context.TODO(), filter).Decode(&result)
+	result, err := userService.DeleteOne(filter)
 
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
