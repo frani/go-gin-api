@@ -4,15 +4,14 @@ Boilerplate microservice API with GIN
 
 # Folder structure
 
-```sh
-| Folder               | description                                                                            |
-| -------------------- | -------------------------------------------------------------------------------------- |
-| /presentations       | Group of endpoints. here can find folders with endpoints.                              |
-| - /:example          | example folder for endpoint                                                            |
-| - / - /handler.go    | Handler functions                                                                      |
-| - / - /routes.go     | Router configuration                                                                   |
-| - / - /validator.go  | Endpoint Request Validator                                                             |
-| /middlewares         | Custom gin middlewares                                                                 |
-| /services            | Business logic, incluye intertal or externaa servicies as SDK (service layer)          |
-| /config              | Environment variables and configuration related things                                 |
-```
+
+| Folder & Files                    | Description                                                                           |
+| --------------------------------- | ------------------------------------------------------------------------------------- |
+| /src/routers                      | AKA endpoints                                                                         |
+| /src/routers/users                | router folder example                                                                 | 
+| /src/routers/users/handler.go     | Handler functions                                                                     |
+| /src/routers/users/router.go      | Router                                                                                |
+| /src/routers/users/validations.go | Endpoint Request Validations                                                          |
+| /src/middlewares                  | Custom Middlewares                                                                    |
+| /src/services                     | Business logic, including internal or external services such as SDK (service layer)   |
+| /src/configs                      | Environment variables and configuration-related things                                |
