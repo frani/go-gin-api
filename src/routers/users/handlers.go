@@ -3,7 +3,6 @@ package users
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	userService "github.com/frani/go-gin-api/src/services/users"
 	"github.com/gin-gonic/gin"
@@ -31,17 +30,9 @@ func ListUsers(ctx *gin.Context) {
 		})
 		return
 	}
-	pageStr := ctx.Query("page")
-	var page int64 = 1
-	if pageStr != "" {
-		page, _ = strconv.ParseInt(pageStr, 10, 64)
-	}
 
-	limitStr := ctx.Query("limit")
-	var limit int64 = 100
-	if limitStr != "" {
-		limit, _ = strconv.ParseInt(limitStr, 10, 64)
-	}
+	page := int64(query.Page)
+	limit := int64(query.Limit)
 
 	fmt.Println("page", page)
 	fmt.Println("limit", limit)
