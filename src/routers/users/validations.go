@@ -5,7 +5,7 @@ type listUserQuery struct {
 	SortOrder string `form:"sortOrder" binding:"omitempty,oneof=asc des"`
 	SortIndex string `form:"sortIndex" binding:"omitempty,alpha"`
 	Page      uint   `form:"page" binding:"omitempty,numeric,min=1"`
-	Limit     uint   `form:"limit" binding:"omitempty,numeric,min=10,max=200"`
+	Limit     uint   `form:"limit" binding:"omitempty,numeric,min=1,max=200"`
 }
 
 // GET one
