@@ -193,7 +193,7 @@ func PostUser(ctx *gin.Context) {
 // @Router /v1/user [put]
 func PatchUser(ctx *gin.Context) {
 
-	var param deleteUserParam
+	var param patchUserParam
 	err := ctx.ShouldBindUri(&param)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
