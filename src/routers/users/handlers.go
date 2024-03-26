@@ -1,7 +1,9 @@
 package users
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	userService "github.com/frani/go-gin-api/src/services/users"
 	"github.com/gin-gonic/gin"
@@ -29,12 +31,26 @@ func ListUsers(ctx *gin.Context) {
 		})
 		return
 	}
+	pageStr := ctx.Query("page")
+	var page int64 = 1
+	if pageStr != "" {
+		page, _ = strconv.ParseInt(pageStr, 10, 64)
+	}
 
-	users, err := userService.List()
+	limitStr := ctx.Query("limit")
+	var limit int64 = 100
+	if limitStr != "" {
+		limit, _ = strconv.ParseInt(limitStr, 10, 64)
+	}
+
+	fmt.Println("page", page)
+	fmt.Println("limit", limit)
+
+	listed, err := userService.List(bson.M{}, page, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "interla server error",
+			"message": "internal server error",
 			"error":   err.Error(),
 		})
 		return
@@ -43,10 +59,20 @@ func ListUsers(ctx *gin.Context) {
 	// Return status 200 OK.
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "users were not found",
-		"count":   len(users),
-		"data":    users,
-		"error":   false,
+		"message": "docs found",
+		"data": gin.H{
+			"docs":          listed.Docs,
+			"totalDocs":     listed.TotalDocs,
+			"limit":         listed.Limit,
+			"page":          listed.Page,
+			"totalPages":    listed.TotalPages,
+			"hasNextPage":   listed.HasNextPage,
+			"nextPage":      listed.NextPage,
+			"hasPrevPage":   listed.HasPrevPage,
+			"prevPage":      listed.PrevPage,
+			"pagingCounter": listed.PagingCounter,
+		},
+		"error": false,
 	})
 }
 
@@ -132,7 +158,7 @@ func PostUser(ctx *gin.Context) {
 	}
 
 	// Create new User struct
-	user, err := userService.CreateUser(body.Name, body.Lastname, body.Password, body.Email, body.Email)
+	user, err := userService.CreateOne(body.Name, body.Lastname, body.Password, body.Email, body.Email)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),

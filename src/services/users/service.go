@@ -2,25 +2,28 @@ package users
 
 import (
 	"context"
+	"fmt"
+	"runtime"
 
 	configs "github.com/frani/go-gin-api/src/configs"
+	utils "github.com/frani/go-gin-api/src/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func List(filter bson.M) (result bson.M, err error) {
+func List(filter interface{}, page, limit int64) (result *utils.Result, err error) {
 
 	// Get all users.
-	cursor, err := configs.DB.Collection("users").Find(context.TODO(), bson.D{{}})
-	if err != nil {
-		return nil, err
-	}
+	collection := configs.DB.Collection("users")
+	pipeline := make([]interface{}, 0)
 
-	var users []bson.M
-	err = cursor.All(context.TODO(), &users)
+	result, err = utils.PaginateAggregate(collection, pipeline, page, limit, nil)
+
 	if err != nil {
+		_, file, line, _ := runtime.Caller(1)
+		fmt.Printf("Error at %s:%d: %s\n", file, line, err.Error())
 		return nil, err
 	}
 
