@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -36,7 +37,9 @@ func main() {
 	})
 
 	// Listen on port 8080
-	if err := r.Run(":8080"); err != nil {
+	fmt.Println("🌥️  Listen on port ", configs.PORT)
+	err := r.Run(configs.PORT)
+	if err != nil {
 		log.Fatal(err)
 	}
 }
