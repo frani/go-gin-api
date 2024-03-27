@@ -7,7 +7,7 @@ import (
 
 	"github.com/frani/go-gin-api/src/services/auth"
 	userService "github.com/frani/go-gin-api/src/services/users"
-	"github.com/frani/go-gin-api/src/utils"
+	utils "github.com/frani/go-gin-api/src/utils"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -63,10 +63,7 @@ func PostLogIn(ctx *gin.Context) {
 		return
 	}
 
-	var roles []string
-	for _, value := range user["roles"].(primitive.A) {
-		roles = append(roles, value.(string))
-	}
+	roles := utils.ConvertPrimitiveToSlice(user["roles"].(primitive.A))
 
 	claims := auth.SignTokenClaims{
 		Email:    user["email"].(string),
