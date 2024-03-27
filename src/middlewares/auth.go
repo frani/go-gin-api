@@ -18,7 +18,7 @@ func Authorize(roles ...string) gin.HandlerFunc {
 		fmt.Println("err", err)
 
 		if err != nil {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error":   err.Error(),
 				"message": "unauthorized",
 				"success": false,
@@ -28,7 +28,7 @@ func Authorize(roles ...string) gin.HandlerFunc {
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok || !token.Valid {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error":   claims.Valid().Error(),
 				"message": "unauthorized",
 				"success": false,
@@ -45,7 +45,7 @@ func Authorize(roles ...string) gin.HandlerFunc {
 			}
 		}
 
-		ctx.JSON(http.StatusForbidden, gin.H{
+		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 			"error":   "",
 			"message": "forbidden",
 			"success": false,
