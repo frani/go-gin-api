@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	configs "github.com/frani/go-gin-api/src/configs"
+	middlewares "github.com/frani/go-gin-api/src/middlewares"
 	routers "github.com/frani/go-gin-api/src/routers"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
@@ -23,6 +25,7 @@ func main() {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.Use(middlewares.RateLimit(10, time.Second))
 
 	// Bind routes
 	routers.InitRouters(r)

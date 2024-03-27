@@ -1,6 +1,7 @@
-package authorize
+package middlewares
 
 import (
+	"fmt"
 	"net/http"
 
 	auth "github.com/frani/go-gin-api/src/services/auth"
@@ -8,10 +9,13 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
-func Authorize(roles []string) gin.HandlerFunc {
+func Authorize(roles ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		tokenString := ctx.Request.Header.Get("Authorization")
 		token, err := auth.Authenticate(tokenString)
+
+		fmt.Println("tokenString", tokenString)
+		fmt.Println("err", err)
 
 		if err != nil {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
@@ -31,8 +35,6 @@ func Authorize(roles []string) gin.HandlerFunc {
 			})
 			return
 		}
-
-		ctx.Set("user", claims["user_id"])
 
 		// TODO: Consultar la base de datos para obtener los roles del usuario
 
