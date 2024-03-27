@@ -1,0 +1,25 @@
+@host = http://localhost
+@port = :8080
+@api = {{host}}{{port}}
+@id = 
+
+### Login
+POST {{api}}/auth/login
+Content-Type: application/json
+
+{
+    "email": "frani@mail.co",
+    "password": "qwerty123456789"
+}
+
+### Logup
+POST {{api}}/auth/logup
+Content-Type: application/json
+
+{
+    "name": "frani",
+    "lastname": "frani",
+    "email": "frani@mail.co",
+    "password": "qwerty123456789",
+    "username": "frani"
+}

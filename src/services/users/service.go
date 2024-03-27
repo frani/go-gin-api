@@ -2,6 +2,7 @@ package users
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"runtime"
 
@@ -34,15 +35,22 @@ func List(filter interface{}, page, limit int64) (result *utils.Result, err erro
 CreateUserSchema
 @desc: adds schema validation and indexes to collection
 */
-func CreateOne(Name string, Lastname string, Password string, Email string, Username string) (result interface{}, err error) {
+func CreateOne(Name string, Lastname string, Password string, Email string, Username string, Roles []string) (result interface{}, err error) {
+
+	hashedPassword, err := utils.HashPassword(Password)
+	if err != nil {
+		return nil, err
+	}
+	hashedPasswordDecoded := hex.EncodeToString(hashedPassword)
 
 	newUser := User{
 		Id:       primitive.NewObjectID(),
 		Name:     Name,
 		Lastname: Lastname,
-		Password: Password,
+		Password: hashedPasswordDecoded,
 		Username: Username,
 		Email:    Email,
+		Roles:    Roles,
 	}
 
 	result, err = configs.DB.Collection("users").InsertOne(context.TODO(), newUser)

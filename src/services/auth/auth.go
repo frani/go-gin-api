@@ -15,6 +15,13 @@ var hmacSecret = []byte(configs.JWT_SECRET)
 var expiryTime = configs.JWT_EXPIRY_TIME
 var issuer = configs.JWT_ISSUER
 
+type SignTokenClaims struct {
+	Email    string
+	Name     string
+	Lastname string
+	Roles    []string
+}
+
 func Authenticate(token string) (result *jwt.Token, err error) {
 
 	// Parse takes the token string and a function for looking up the key. The latter is especially
@@ -36,8 +43,7 @@ func Authenticate(token string) (result *jwt.Token, err error) {
 
 }
 
-// TODO: add claims keys as parameters
-func SignToken() (tokenString string, err error) {
+func SignToken(claims SignTokenClaims) (tokenString string, err error) {
 
 	duration, err := time.ParseDuration(expiryTime)
 	if err != nil {
@@ -46,7 +52,10 @@ func SignToken() (tokenString string, err error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"foo": "bar",
+		"name":     claims.Name,
+		"lastname": claims.Lastname,
+		"email":    claims.Email,
+		"roles":    claims.Roles,
 		"StandardClaims": jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(duration).Unix(),
 			Issuer:    issuer,

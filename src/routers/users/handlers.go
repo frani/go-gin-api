@@ -149,7 +149,7 @@ func PostUser(ctx *gin.Context) {
 	}
 
 	// Create new User struct
-	user, err := userService.CreateOne(body.Name, body.Lastname, body.Password, body.Email, body.Email)
+	user, err := userService.CreateOne(body.Name, body.Lastname, body.Password, body.Email, body.Email, body.Roles)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error":   err.Error(),

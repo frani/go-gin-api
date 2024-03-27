@@ -9,4 +9,5 @@ type User struct {
 	Password string             `json:"password,omitempty" bson:"password,omitempty" validate:"required,password,min=10,max=60"`
 	Name     string             `json:"name,omitempty" bson:"name,omitempty" validate:"required,min=3,max=60"`
 	Lastname string             `json:"lastname,omitempty" bson:"lastname,omitempty" validate:"required,min=3,max=60"`
+	Roles    []string           `json:"roles" bson:"roles" default:"['user']" validate:"required,min=3,max=60"`
 }
