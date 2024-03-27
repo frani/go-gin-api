@@ -1,29 +1,35 @@
 @host = http://localhost
 @port = :8080
 @api = {{host}}{{port}}
-@id = 65ff26a648554596f5720ea6
+@id = 6604a10ac622b6f31c7728b2
+@token = 
 
 
 ### LIST users
 GET {{api}}/users?limit=10
+Authorization: Baerer {{token}}
 
 ### Create a new user
 POST {{api}}/users
 Content-Type: application/json
+Authorization: Baerer {{token}}
 
 {
     "name": "frani",
     "lastname": "frani",
     "email": "frani@mail.co",
     "password": "qwerty123456789",
-    "username": "frani"
+    "username": "frani",
+    "roles": ["admin"]
 }
 
 ### Get a user
 GET {{api}}/users/{{id}}
+Authorization: Baerer {{token}}
 
 ### Update a user
 PATCH {{api}}/users/{{id}}
+Authorization: Baerer {{token}}
 Content-Type: application/json
 
 {
@@ -34,3 +40,4 @@ Content-Type: application/json
 
 ### Delete a user
 DELETE {{api}}/users/{{id}}
+Authorization: Baerer {{token}}
