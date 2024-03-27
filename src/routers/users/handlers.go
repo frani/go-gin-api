@@ -1,7 +1,6 @@
 package users
 
 import (
-	"fmt"
 	"net/http"
 
 	userService "github.com/frani/go-gin-api/src/services/users"
@@ -33,9 +32,6 @@ func ListUsers(ctx *gin.Context) {
 
 	page := int64(query.Page)
 	limit := int64(query.Limit)
-
-	fmt.Println("page", page)
-	fmt.Println("limit", limit)
 
 	listed, err := userService.List(bson.M{}, page, limit)
 	if err != nil {
@@ -117,7 +113,7 @@ func GetUser(ctx *gin.Context) {
 	// Return status 200 OK.
 	ctx.JSON(http.StatusOK, gin.H{
 		"error":   false,
-		"message": nil,
+		"message": "document found",
 		"success": true,
 		"data":    found,
 	})
