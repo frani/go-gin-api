@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var PORT string
 var MONGO_DB string
 var MONGO_URI string
 var JWT_SECRET string
@@ -18,6 +19,12 @@ func init() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
+	}
+
+	// BASE
+	PORT = os.Getenv("PORT")
+	if PORT == "" {
+		PORT = ":8080"
 	}
 
 	// MONGO
