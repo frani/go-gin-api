@@ -1,22 +1,29 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
+	"strings"
 
 	auth "github.com/frani/go-gin-api/src/services/auth"
+	utils "github.com/frani/go-gin-api/src/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )
 
 func Authorize(roles ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		tokenString := ctx.Request.Header.Get("Authorization")
-		token, err := auth.Authenticate(tokenString)
+		authorization := ctx.Request.Header.Get("Authorization")
+		tokenSplitted := strings.Split(authorization, " ")
+		if len(tokenSplitted) != 2 {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error":   "",
+				"message": "unauthorized",
+				"success": false,
+			})
+			return
+		}
 
-		fmt.Println("tokenString", tokenString)
-		fmt.Println("err", err)
-
+		token, err := auth.Authenticate(tokenSplitted[1])
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error":   err.Error(),
@@ -36,13 +43,11 @@ func Authorize(roles ...string) gin.HandlerFunc {
 			return
 		}
 
-		// TODO: Consultar la base de datos para obtener los roles del usuario
+		claimsRoles := utils.ConvertInterfacesToSlice((claims["roles"].([]interface{})))
 
-		for _, role := range roles {
-			if role == "admin" {
-				ctx.Next()
-				return
-			}
+		if utils.SomeElementInSlice(claimsRoles, roles) {
+			ctx.Next()
+			return
 		}
 
 		ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
