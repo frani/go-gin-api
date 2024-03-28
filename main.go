@@ -24,9 +24,9 @@ func main() {
 
 	// Middleware
 	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(middlewares.RateLimit(10, time.Second))
+	r.Use(gin.Recovery())
 
 	// Bind routes
 	routers.InitRouters(r)
@@ -41,5 +41,6 @@ func main() {
 	err := r.Run(configs.PORT)
 	if err != nil {
 		log.Fatal(err)
+
 	}
 }
