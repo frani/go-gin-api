@@ -1,6 +1,14 @@
 package users
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"context"
+
+	configs "github.com/frani/go-gin-api/src/configs"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
 
 type User struct {
 	Id       primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
@@ -10,4 +18,16 @@ type User struct {
 	Name     string             `json:"name,omitempty" bson:"name,omitempty" validate:"required,min=3,max=60"`
 	Lastname string             `json:"lastname,omitempty" bson:"lastname,omitempty" validate:"required,min=3,max=60"`
 	Roles    []string           `json:"roles" bson:"roles" default:"['user']" validate:"required,min=3,max=60"`
+}
+
+func init() {
+
+	index := mongo.IndexModel{
+		Keys: bson.D{
+			{Key: "email", Value: 1},
+		},
+		Options: options.Index().SetUnique(true),
+	}
+
+	configs.DB.Collection("users").Indexes().CreateOne(context.TODO(), index)
 }
