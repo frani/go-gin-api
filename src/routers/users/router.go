@@ -7,8 +7,8 @@ import (
 
 func InitRouter(r *gin.RouterGroup) {
 	r.Use(middlewares.Authorize("admin"))
-	r.GET("/", ListUsers)
-	r.POST("/", PostUser)
+	r.GET("", ListUsers)
+	r.POST("", PostUser)
 	r.GET("/:id", GetUser)
 	r.PATCH("/:id", PatchUser)
 	r.DELETE("/:id", DeleteUser)
