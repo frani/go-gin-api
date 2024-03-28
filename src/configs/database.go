@@ -12,7 +12,7 @@ import (
 var DB *mongo.Database
 
 // Connect | @desc: connects to mongoDB
-func ConnectDB() {
+func init() {
 
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(MONGO_URI))
 	if err != nil {

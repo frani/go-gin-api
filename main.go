@@ -14,9 +14,6 @@ import (
 )
 
 func main() {
-	// Connected with database
-	configs.ConnectDB()
-
 	// Create Gin App
 	r := gin.New()
 
