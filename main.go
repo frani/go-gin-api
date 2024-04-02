@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"time"
 
+	docs "github.com/frani/go-gin-api/docs"
 	configs "github.com/frani/go-gin-api/src/configs"
 	middlewares "github.com/frani/go-gin-api/src/middlewares"
 	routers "github.com/frani/go-gin-api/src/routers"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
@@ -27,6 +30,13 @@ func main() {
 
 	// Bind routes
 	routers.InitRouters(r)
+
+	// Docs
+	docs.SwaggerInfo.BasePath = "/"
+	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+	r.GET("/docs", func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusFound, "/docs/index.html")
+	})
 
 	// Handle not founds
 	r.NoRoute(func(c *gin.Context) {

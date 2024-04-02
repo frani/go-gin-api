@@ -1,0 +1,95 @@
+info:
+  contact: {}
+paths:
+  /v1/user:
+    delete:
+      consumes:
+      - application/json
+      description: Delete user by given ID.
+      parameters:
+      - description: User ID
+        in: body
+        name: id
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ok
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: delete user by given ID
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      description: Create a new user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: create a new user
+      tags:
+      - User
+    put:
+      consumes:
+      - application/json
+      description: Update user.
+      parameters:
+      - description: User ID
+        in: body
+        name: id
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: ok
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: update user
+      tags:
+      - User
+  /v1/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get user by given ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: get user by given ID
+      tags:
+      - User
+  /v1/users:
+    get:
+      consumes:
+      - application/json
+      description: Get all exists users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: get all exists users
+      tags:
+      - users
+swagger: "2.0"

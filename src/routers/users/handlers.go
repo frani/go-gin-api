@@ -15,7 +15,7 @@ import (
 // @Tags users
 // @Accept json
 // @Produce json
-// @Success 200 {array} models.User
+// @Success 200
 // @Router /v1/users [get]
 func ListUsers(ctx *gin.Context) {
 
@@ -70,7 +70,7 @@ func ListUsers(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
-// @Success 200 {object} models.User
+// @Success 200
 // @Router /v1/user/{id} [get]
 func GetUser(ctx *gin.Context) {
 
@@ -125,11 +125,7 @@ func GetUser(ctx *gin.Context) {
 // @Tags User
 // @Accept json
 // @Produce json
-// @Param title body string true "Title"
-// @Param author body string true "Author"
-// @Param user_attrs body models.UserAttrs true "User attributes"
-// @Success 200 {object} models.User
-// @Security ApiKeyAuth
+// @Success 200
 // @Router /v1/user [post]
 func PostUser(ctx *gin.Context) {
 
@@ -171,10 +167,6 @@ func PostUser(ctx *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id body string true "User ID"
-// @Param title body string true "Title"
-// @Param author body string true "Author"
-// @Param user_status body integer true "User status"
-// @Param user_attrs body models.UserAttrs true "User attributes"
 // @Success 201 {string} status "ok"
 // @Security ApiKeyAuth
 // @Router /v1/user [put]
