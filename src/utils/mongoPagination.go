@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,14 +16,15 @@ type Result struct {
 	Page          int64
 	TotalPages    int64
 	HasNextPage   bool
-	NextPage      int64
+	NextPage      *int64
 	HasPrevPage   bool
 	PrevPage      *int64
 	PagingCounter int64
 }
 
 func PaginateAggregate(collection *mongo.Collection, pipeline []interface{}, page, limit int64, collation *options.Collation) (result *Result, err error) {
-	ctx := context.TODO()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+	defer cancel()
 
 	totalDocs, err := collection.CountDocuments(ctx, bson.D{{}})
 	if err != nil {
@@ -38,7 +40,7 @@ func PaginateAggregate(collection *mongo.Collection, pipeline []interface{}, pag
 
 	totalPages := (totalDocs + limit - 1) / limit
 	offset := (page - 1) * limit
-	options := options.Aggregate().SetMaxTime(2000)
+	options := options.Aggregate().SetMaxTime(time.Second * 30)
 
 	if collation != nil {
 		options.SetCollation(collation)
@@ -63,10 +65,15 @@ func PaginateAggregate(collection *mongo.Collection, pipeline []interface{}, pag
 		Page:          page,
 		TotalPages:    totalPages,
 		HasNextPage:   page < totalPages,
-		NextPage:      page + 1,
+		NextPage:      nil,
 		HasPrevPage:   page > 1,
 		PrevPage:      nil,
 		PagingCounter: offset + 1,
+	}
+
+	if result.HasNextPage {
+		nextPage := result.Page + 1
+		result.NextPage = &nextPage
 	}
 
 	if page > 1 {
